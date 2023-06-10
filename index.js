@@ -28,9 +28,31 @@ async function run() {
     await client.connect();
 
     const classCollection = client.db("anuDesign").collection("class");
+    const instructorsCollection = client
+      .db("anuDesign")
+      .collection("instructors");
+    const usersCollection = client.db("anuDesign").collection("users");
 
     app.get("/class", async (req, res) => {
       const result = await classCollection.find().toArray();
+      res.send(result);
+    });
+    app.get("/instructors", async (req, res) => {
+      const result = await instructorsCollection.find().toArray();
+      res.send(result);
+    });
+
+    // users
+    app.post("/users", async (req, res) => {
+      const user = req.body;
+      const query = { email: user.email };
+      const existingUser = await usersCollection.findOne(query);
+
+      if (existingUser) {
+        return res.send({ message: "user already exists" });
+      }
+
+      const result = await usersCollection.insertOne(user);
       res.send(result);
     });
 
