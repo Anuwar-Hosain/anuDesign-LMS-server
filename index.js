@@ -1,6 +1,7 @@
 require("dotenv").config();
 const express = require("express");
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
+const jwt = require("jsonwebtoken");
 const app = express();
 const cors = require("cors");
 
@@ -32,6 +33,16 @@ async function run() {
       .db("anuDesign")
       .collection("instructors");
     const usersCollection = client.db("anuDesign").collection("users");
+
+    // jwt
+    app.post("/jwt", (req, res) => {
+      const user = req.body;
+      const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, {
+        expiresIn: "2y",
+      });
+
+      res.send({ token });
+    });
 
     app.get("/class", async (req, res) => {
       const result = await classCollection.find().toArray();
