@@ -3,6 +3,7 @@ const express = require("express");
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const jwt = require("jsonwebtoken");
 const app = express();
+const stripe = require("stripe")(process.env.PAYMENT_SECRET_KEY);
 const cors = require("cors");
 
 const port = process.env.PORT || 5000;
@@ -57,6 +58,7 @@ async function run() {
     const selectedClassCollection = client
       .db("anuDesign")
       .collection("selectedClasses");
+    const paymentCollection = client.db("anuDesign").collection("payments");
 
     // jwt
     app.post("/jwt", (req, res) => {
@@ -121,6 +123,42 @@ async function run() {
       const query = { _id: new ObjectId(id) };
       const result = await selectedClassCollection.deleteOne(query);
       res.send(result);
+    });
+    // create payment intent
+    app.post("/create-payment-intent", verifyJWT, async (req, res) => {
+      const { price } = req.body;
+      if (price) {
+        const amount = parseInt(price * 100);
+        const paymentIntent = await stripe.paymentIntents.create({
+          amount: amount,
+          currency: "usd",
+          payment_method_types: ["card"],
+        });
+
+        res.send({
+          clientSecret: paymentIntent.client_secret,
+        });
+      }
+    });
+
+    // payment
+    app.post("/payments", verifyJWT, async (req, res) => {
+      const payment = req.body;
+      const insertResult = await paymentCollection.insertOne(payment);
+
+      const query = { _id: new ObjectId(req.body.selectedId) };
+      const deleteResult = await selectedClassCollection.deleteMany(query);
+
+      res.send({ insertResult, deleteResult });
+    });
+
+    app.get("/enrolledClasses/:email", verifyJWT, async (req, res) => {
+      const enrolled = await paymentCollection
+        .find({
+          email: req.params.email,
+        })
+        .toArray();
+      res.send(enrolled);
     });
 
     // Send a ping to confirm a successful connection
