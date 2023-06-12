@@ -59,10 +59,6 @@ async function run() {
       .db("anuDesign")
       .collection("selectedClasses");
     const paymentCollection = client.db("anuDesign").collection("payments");
-    // const addClassesCollection = client
-    //   .db("anuDesign")
-    //   .collection("addClasses");
-
     // jwt
     app.post("/jwt", (req, res) => {
       const user = req.body;
@@ -162,6 +158,12 @@ async function run() {
       res.send(result);
     });
 
+    // admin manage classes
+    app.get("/classes", verifyJWT, verifyAdmin, async (req, res) => {
+      const result = await classCollection.find().toArray();
+      res.send(result);
+    });
+
     // users
     app.post("/users", async (req, res) => {
       const user1 = req.body;
@@ -177,12 +179,18 @@ async function run() {
       res.send(result);
     });
 
-    // user get
+    // create a instructors
+    app.post("/instructors", async (req, res) => {
+      const user = req.body;
+      const result = await instructorsCollection.insertOne(user);
+      res.send(result);
+    });
+    // user get admin
     app.get("/users", verifyJWT, verifyAdmin, async (req, res) => {
       const result = await usersCollection.find().toArray();
       res.send(result);
     });
-
+    // user role update
     app.patch("/users/admin/:id", async (req, res) => {
       const id = req.params.id;
       console.log(id);
@@ -192,10 +200,35 @@ async function run() {
           role: "admin",
         },
       };
-
       const result = await usersCollection.updateOne(filter, updateDoc);
       res.send(result);
     });
+
+    // classes status update api
+    app.patch("/classes/admin/:id", async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+      const updateDoc = {
+        $set: {
+          status: "approved",
+        },
+      };
+      const result = await classCollection.updateOne(filter, updateDoc);
+      res.send(result);
+    });
+    // classes status update api
+    app.patch("/classes/deny/:id", async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+      const updateDoc = {
+        $set: {
+          status: "denied",
+        },
+      };
+      const result = await classCollection.updateOne(filter, updateDoc);
+      res.send(result);
+    });
+
     app.patch("/users/instructor/:id", async (req, res) => {
       const id = req.params.id;
       console.log(id);
@@ -205,22 +238,34 @@ async function run() {
           role: "instructor",
         },
       };
-      // available set update api
-      app.patch("/classes/seats/:id", async (req, res) => {
-        const id = req.params.id;
-        console.log(id);
-        const filter = { _id: new ObjectId(id) };
-        const updateDoc = {
-          $set: {
-            seats: seats - 1,
-          },
-        };
-
-        const result = await classCollection.updateOne(filter, updateDoc);
-        res.send(result);
-      });
-
       const result = await usersCollection.updateOne(filter, updateDoc);
+      res.send(result);
+    });
+
+    app.patch("/classes/update/:id", async (req, res) => {
+      const id = req.params.id;
+      const feedback = req.body;
+      console.log(id);
+      const filter = { _id: new ObjectId(id) };
+      const updateDoc = {
+        $set: {
+          feedback: feedback,
+        },
+      };
+      const result = await usersCollection.updateOne(filter, updateDoc);
+      res.send(result);
+    });
+
+    // available set update api
+    app.patch("/classes/seats/:id", async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+      const updateDoc = {
+        $inc: {
+          seats: -1,
+        },
+      };
+      const result = await classCollection.updateOne(filter, updateDoc);
       res.send(result);
     });
 
