@@ -309,7 +309,6 @@ async function run() {
           currency: "usd",
           payment_method_types: ["card"],
         });
-
         res.send({
           clientSecret: paymentIntent.client_secret,
         });
@@ -320,10 +319,8 @@ async function run() {
     app.post("/payments", verifyJWT, async (req, res) => {
       const payment = req.body;
       const insertResult = await paymentCollection.insertOne(payment);
-
       const query = { _id: new ObjectId(req.body.selectedId) };
       const deleteResult = await selectedClassCollection.deleteMany(query);
-
       res.send({ insertResult, deleteResult });
     });
 
