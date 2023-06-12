@@ -231,7 +231,6 @@ async function run() {
 
     app.patch("/users/instructor/:id", async (req, res) => {
       const id = req.params.id;
-      console.log(id);
       const filter = { _id: new ObjectId(id) };
       const updateDoc = {
         $set: {
@@ -244,15 +243,15 @@ async function run() {
 
     app.patch("/classes/update/:id", async (req, res) => {
       const id = req.params.id;
-      const feedback = req.body;
       console.log(id);
+      const feedback = req.body.feedback;
       const filter = { _id: new ObjectId(id) };
       const updateDoc = {
         $set: {
           feedback: feedback,
         },
       };
-      const result = await usersCollection.updateOne(filter, updateDoc);
+      const result = await classCollection.updateOne(filter, updateDoc);
       res.send(result);
     });
 
