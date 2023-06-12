@@ -59,6 +59,9 @@ async function run() {
       .db("anuDesign")
       .collection("selectedClasses");
     const paymentCollection = client.db("anuDesign").collection("payments");
+    const addClassesCollection = client
+      .db("anuDesign")
+      .collection("addClasses");
 
     // jwt
     app.post("/jwt", (req, res) => {
@@ -273,6 +276,12 @@ async function run() {
         .sort({ date: 1 })
         .toArray();
       res.send(enrolled);
+    });
+
+    app.post("/addClasses", verifyJWT, verifyInstructor, async (req, res) => {
+      const newItem = req.body;
+      const result = await addClassesCollection.insertOne(newItem);
+      res.send(result);
     });
 
     // Send a ping to confirm a successful connection
