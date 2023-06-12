@@ -59,9 +59,9 @@ async function run() {
       .db("anuDesign")
       .collection("selectedClasses");
     const paymentCollection = client.db("anuDesign").collection("payments");
-    const addClassesCollection = client
-      .db("anuDesign")
-      .collection("addClasses");
+    // const addClassesCollection = client
+    //   .db("anuDesign")
+    //   .collection("addClasses");
 
     // jwt
     app.post("/jwt", (req, res) => {
@@ -154,7 +154,8 @@ async function run() {
     // open api
     app.get("/class", async (req, res) => {
       const result = await classCollection.find().toArray();
-      res.send(result);
+      const mainResult = result.filter((item) => item.status === "approved");
+      res.send(mainResult);
     });
     app.get("/instructors", async (req, res) => {
       const result = await instructorsCollection.find().toArray();
@@ -204,6 +205,20 @@ async function run() {
           role: "instructor",
         },
       };
+      // available set update api
+      app.patch("/classes/seats/:id", async (req, res) => {
+        const id = req.params.id;
+        console.log(id);
+        const filter = { _id: new ObjectId(id) };
+        const updateDoc = {
+          $set: {
+            seats: seats - 1,
+          },
+        };
+
+        const result = await classCollection.updateOne(filter, updateDoc);
+        res.send(result);
+      });
 
       const result = await usersCollection.updateOne(filter, updateDoc);
       res.send(result);
@@ -280,9 +295,22 @@ async function run() {
 
     app.post("/addClasses", verifyJWT, verifyInstructor, async (req, res) => {
       const newItem = req.body;
-      const result = await addClassesCollection.insertOne(newItem);
+      const result = await classCollection.insertOne(newItem);
       res.send(result);
     });
+    app.get(
+      "/addClasses/:email",
+      verifyJWT,
+      verifyInstructor,
+      async (req, res) => {
+        const addClasses = await classCollection
+          .find({
+            email: req.params.email,
+          })
+          .toArray();
+        res.send(addClasses);
+      }
+    );
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
